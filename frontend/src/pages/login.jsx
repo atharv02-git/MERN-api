@@ -1,5 +1,10 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaSignInAlt } from "react-icons/fa";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { login, reset } from "../features/auth/authSlice";
+import Spinner from "../components/Spinner";
 
 function Login() {
   const [formData, setFormData] = useState({
@@ -7,8 +12,26 @@ function Login() {
     password: "",
   });
 
-  // destructuring above form field values
   const { email, password } = formData;
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { user, isLoading, isError, isSuccess, message } = useSelector(
+    (state) => state.auth
+  );
+
+  useEffect(() => {
+    if (isError) {
+      toast.error(message);
+    }
+
+    if (isSuccess || user) {
+      navigate("/");
+    }
+
+    dispatch(reset());
+  }, [user, isError, isSuccess, message, navigate, dispatch]);
 
   const onChange = (e) => {
     setFormData((prevState) => ({
@@ -17,24 +40,32 @@ function Login() {
     }));
   };
 
-  const submitHandler = (e) => {
+  const onSubmit = (e) => {
     e.preventDefault();
-    console.log(formData);
+
+    const userData = {
+      email,
+      password,
+    };
+
+    dispatch(login(userData));
   };
+
+  if (isLoading) {
+    return <Spinner />;
+  }
 
   return (
     <>
       <section className="heading">
         <h1>
-          <FaSignInAlt />
-          Login
+          <FaSignInAlt /> Login
         </h1>
         <p>Login and start setting goals</p>
       </section>
 
       <section className="form">
-        <form onSubmit={submitHandler}>
-          {/* Email Section */}
+        <form onSubmit={onSubmit}>
           <div className="form-group">
             <input
               type="email"
@@ -42,11 +73,10 @@ function Login() {
               id="email"
               name="email"
               value={email}
-              placeholder="Enter email"
+              placeholder="Enter your email"
               onChange={onChange}
             />
           </div>
-          {/* Password section */}
           <div className="form-group">
             <input
               type="password"
@@ -54,10 +84,11 @@ function Login() {
               id="password"
               name="password"
               value={password}
-              placeholder="Enter Password"
+              placeholder="Enter password"
               onChange={onChange}
             />
           </div>
+
           <div className="form-group">
             <button type="submit" className="btn btn-block">
               Submit
